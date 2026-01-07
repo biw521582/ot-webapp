@@ -1,0 +1,1551 @@
+<!doctype html>
+<html lang="th">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการ OT พนักงาน</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c2416 0%, #1a1410 100%);
+            color: #c9b896;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(42, 35, 28, 0.6);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(201, 184, 150, 0.1);
+        }
+
+        /* Navigation */
+        .main-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            background: rgba(26, 20, 16, 0.5);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 14px 20px;
+            background: transparent;
+            color: #8a7d6b;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(201, 184, 150, 0.08);
+            color: #c9b896;
+        }
+
+        .nav-btn.active {
+            background: rgba(139, 115, 85, 0.3);
+            color: #e8d4b0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Department Navigation */
+        .dept-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            background: rgba(26, 20, 16, 0.5);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        .dept-btn {
+            flex: 1;
+            padding: 12px 18px;
+            background: transparent;
+            color: #8a7d6b;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dept-btn:hover {
+            background: rgba(201, 184, 150, 0.08);
+            color: #c9b896;
+        }
+
+        .dept-btn.active {
+            background: rgba(139, 115, 85, 0.3);
+            color: #e8d4b0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add Button */
+        .add-btn-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .add-btn {
+            padding: 12px 24px;
+            background: rgba(139, 115, 85, 0.4);
+            color: #e8d4b0;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background: rgba(139, 115, 85, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Summary Cards - 1x4 Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-card {
+            background: rgba(26, 20, 16, 0.6);
+            border: 1px solid rgba(201, 184, 150, 0.15);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            border-color: rgba(201, 184, 150, 0.25);
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #8a7d6b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .summary-number {
+            font-size: 36px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: #c9b896;
+        }
+
+        .summary-card.total .summary-number { color: #b8a67d; }
+        .summary-card.with-ot .summary-number { color: #a8947d; }
+        .summary-card.without-ot .summary-number { color: #8a7d6b; }
+        .summary-card.helping .summary-number { color: #9a8d7d; }
+        .summary-card.present .summary-number { color: #a8947d; }
+        .summary-card.leave .summary-number { color: #7d8a9a; }
+        .summary-card.absent .summary-number { color: #9a7d7d; }
+        .summary-card.late .summary-number { color: #b8a67d; }
+
+        /* Table Container */
+        .table-container {
+            background: rgba(26, 20, 16, 0.6);
+            border: 1px solid rgba(201, 184, 150, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .table-header {
+            background: rgba(42, 35, 28, 0.8);
+            padding: 16px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e8d4b0;
+            border-bottom: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        /* Excel-style Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: rgba(42, 35, 28, 0.9);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a8947d;
+            border-right: 1px solid rgba(201, 184, 150, 0.08);
+            border-bottom: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        .data-table th:last-child {
+            border-right: none;
+        }
+
+        .data-table td {
+            padding: 14px 12px;
+            border-right: 1px solid rgba(201, 184, 150, 0.05);
+            border-bottom: 1px solid rgba(201, 184, 150, 0.08);
+            font-size: 14px;
+            color: #c9b896;
+        }
+
+        .data-table td:last-child {
+            border-right: none;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(201, 184, 150, 0.05);
+        }
+
+        .data-table tbody tr.locked {
+            opacity: 0.4;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .status-badge.present { 
+            background: rgba(168, 148, 125, 0.15); 
+            color: #b8a67d; 
+            border-color: rgba(168, 148, 125, 0.3); 
+        }
+        .status-badge.leave { 
+            background: rgba(125, 138, 154, 0.15); 
+            color: #8a9aaa; 
+            border-color: rgba(125, 138, 154, 0.3); 
+        }
+        .status-badge.absent { 
+            background: rgba(154, 125, 125, 0.15); 
+            color: #aa8a8a; 
+            border-color: rgba(154, 125, 125, 0.3); 
+        }
+        .status-badge.late { 
+            background: rgba(184, 166, 125, 0.15); 
+            color: #c9b896; 
+            border-color: rgba(184, 166, 125, 0.3); 
+        }
+
+        /* Form Controls */
+        .control-select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(26, 20, 16, 0.8);
+            color: #c9b896;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .control-select:focus {
+            outline: none;
+            border-color: rgba(201, 184, 150, 0.4);
+            background: rgba(26, 20, 16, 0.9);
+        }
+
+        .control-select:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .control-select.ot-yes { 
+            border-color: rgba(168, 148, 125, 0.3); 
+            background: rgba(168, 148, 125, 0.1); 
+        }
+        .control-select.ot-no { 
+            border-color: rgba(138, 125, 107, 0.3); 
+            background: rgba(138, 125, 107, 0.1); 
+        }
+        .control-select.helping { 
+            border-color: rgba(154, 141, 125, 0.3); 
+            background: rgba(154, 141, 125, 0.1); 
+        }
+
+        /* Buttons */
+        .btn-edit {
+            padding: 8px 16px;
+            background: rgba(139, 115, 85, 0.4);
+            color: #e8d4b0;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit:hover {
+            background: rgba(139, 115, 85, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-edit:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(42, 35, 28, 0.95);
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 8px;
+            padding: 28px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e8d4b0;
+        }
+
+        .btn-close {
+            width: 36px;
+            height: 36px;
+            background: rgba(201, 184, 150, 0.1);
+            color: #8a7d6b;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close:hover {
+            background: rgba(154, 125, 125, 0.3);
+            color: #e8d4b0;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a8947d;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(26, 20, 16, 0.8);
+            color: #c9b896;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: rgba(201, 184, 150, 0.4);
+            background: rgba(26, 20, 16, 0.9);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(201, 184, 150, 0.15);
+        }
+
+        .btn-cancel,
+        .btn-submit {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel {
+            background: rgba(201, 184, 150, 0.1);
+            color: #8a7d6b;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(201, 184, 150, 0.15);
+        }
+
+        .btn-submit {
+            background: rgba(139, 115, 85, 0.4);
+            color: #e8d4b0;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-submit:hover {
+            background: rgba(139, 115, 85, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Remark Input */
+        .remark-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(26, 20, 16, 0.8);
+            color: #c9b896;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .remark-input:focus {
+            outline: none;
+            border-color: rgba(201, 184, 150, 0.4);
+        }
+
+        .remark-input.required {
+            border-color: rgba(154, 125, 125, 0.5);
+            box-shadow: 0 0 0 2px rgba(154, 125, 125, 0.15);
+        }
+
+        .remark-display {
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: rgba(168, 148, 125, 0.1);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #a8947d;
+            border: 1px solid rgba(168, 148, 125, 0.2);
+        }
+
+        /* Checkbox */
+        .status-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #8b7355;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #5a5040;
+        }
+
+        .empty-state-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            color: #6a6050;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(42, 35, 28, 0.95);
+            color: #e8d4b0;
+            padding: 16px 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(201, 184, 150, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            font-weight: 500;
+            font-size: 15px;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            display: flex;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            background: rgba(139, 115, 85, 0.95);
+            border-color: rgba(201, 184, 150, 0.3);
+        }
+
+        .toast.error {
+            background: rgba(154, 125, 125, 0.95);
+            border-color: rgba(170, 138, 138, 0.3);
+        }
+
+        /* Page Visibility */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Error Indicator */
+        .error-indicator {
+            color: #aa8a8a;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-indicator.show {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .summary-grid {
+                gap: 12px;
+            }
+            
+            .summary-number {
+                font-size: 32px;
+            }
+            
+            .summary-label {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                gap: 8px;
+            }
+            
+            .summary-card {
+                padding: 16px 10px;
+            }
+            
+            .summary-number {
+                font-size: 28px;
+            }
+            
+            .summary-label {
+                font-size: 11px;
+            }
+
+            .data-table {
+                font-size: 12px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 12px;
+            }
+
+            .nav-btn {
+                font-size: 13px;
+                padding: 12px 8px;
+            }
+
+            .summary-number {
+                font-size: 24px;
+            }
+
+            .summary-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="app-container"><!-- Main Navigation -->
+   <div class="main-nav"><button class="nav-btn active" onclick="switchPage('ot', this)"> 📋 OT ประจำวัน </button> <button class="nav-btn" onclick="switchPage('status', this)"> ✅ สถานะการทำงาน </button> <button class="nav-btn" onclick="switchPage('report', this)"> 📊 สรุป + เช็คชื่อรายวัน </button>
+   </div><!-- Department Navigation -->
+   <div class="dept-nav" id="deptNav"><button class="dept-btn active" onclick="switchDept('PRESS_AUTO', this)"> PRESS Automotive </button> <button class="dept-btn" onclick="switchDept('PRESS_HYD', this)"> PRESS HYD </button>
+   </div><!-- OT Page -->
+   <div class="page active" id="otPage">
+    <div class="add-btn-container"><button class="add-btn" onclick="openAddModal()"> ➕ เพิ่มพนักงานใหม่ </button>
+    </div><!-- Summary Cards -->
+    <div class="summary-grid">
+     <div class="summary-card total">
+      <div class="summary-label">
+       ทั้งหมด
+      </div>
+      <div class="summary-number" id="otSummaryTotal">
+       0
+      </div>
+     </div>
+     <div class="summary-card with-ot">
+      <div class="summary-label">
+       ทำ OT
+      </div>
+      <div class="summary-number" id="otSummaryWithOT">
+       0
+      </div>
+     </div>
+     <div class="summary-card without-ot">
+      <div class="summary-label">
+       ไม่ทำ OT
+      </div>
+      <div class="summary-number" id="otSummaryWithoutOT">
+       0
+      </div>
+     </div>
+     <div class="summary-card helping">
+      <div class="summary-label">
+       ไปช่วย
+      </div>
+      <div class="summary-number" id="otSummaryHelping">
+       0
+      </div>
+     </div>
+    </div><!-- Employee Table -->
+    <div class="table-container">
+     <div class="table-header">
+      รายชื่อพนักงาน
+     </div>
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th style="width: 50px;">#</th>
+        <th style="width: 120px;">รหัส</th>
+        <th>ชื่อ-นามสกุล</th>
+        <th style="width: 100px;">สถานะ</th>
+        <th style="width: 80px;">สายรถ</th>
+        <th style="width: 200px;">ประเภทงาน</th>
+        <th style="width: 150px;">OT</th>
+        <th style="width: 100px;">จัดการ</th>
+       </tr>
+      </thead>
+      <tbody id="otTableBody"><!-- Data will be inserted here -->
+      </tbody>
+     </table>
+    </div>
+   </div><!-- Status Page -->
+   <div class="page" id="statusPage"><!-- Summary Cards -->
+    <div class="summary-grid">
+     <div class="summary-card present">
+      <div class="summary-label">
+       มาทำงาน (P)
+      </div>
+      <div class="summary-number" id="statusSummaryPresent">
+       0
+      </div>
+     </div>
+     <div class="summary-card leave">
+      <div class="summary-label">
+       ลา (L)
+      </div>
+      <div class="summary-number" id="statusSummaryLeave">
+       0
+      </div>
+     </div>
+     <div class="summary-card absent">
+      <div class="summary-label">
+       ขาด (A)
+      </div>
+      <div class="summary-number" id="statusSummaryAbsent">
+       0
+      </div>
+     </div>
+     <div class="summary-card late">
+      <div class="summary-label">
+       มาสาย (T)
+      </div>
+      <div class="summary-number" id="statusSummaryLate">
+       0
+      </div>
+     </div>
+    </div><!-- Status Table -->
+    <div class="table-container">
+     <div class="table-header">
+      จัดการสถานะการทำงาน
+     </div>
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th style="width: 50px;">#</th>
+        <th style="width: 120px;">รหัส</th>
+        <th>ชื่อ-นามสกุล</th>
+        <th style="width: 80px;">สายรถ</th>
+        <th style="width: 200px;">สถานะ</th>
+        <th style="width: 300px;">หมายเหตุ</th>
+       </tr>
+      </thead>
+      <tbody id="statusTableBody"><!-- Data will be inserted here -->
+      </tbody>
+     </table>
+    </div>
+   </div><!-- Report Page -->
+   <div class="page" id="reportPage"><!-- Summary Cards -->
+    <div class="summary-grid">
+     <div class="summary-card present">
+      <div class="summary-label">
+       มาทำงาน (P)
+      </div>
+      <div class="summary-number" id="reportSummaryPresent">
+       0
+      </div>
+     </div>
+     <div class="summary-card leave">
+      <div class="summary-label">
+       ลา (L)
+      </div>
+      <div class="summary-number" id="reportSummaryLeave">
+       0
+      </div>
+     </div>
+     <div class="summary-card absent">
+      <div class="summary-label">
+       ขาด (A)
+      </div>
+      <div class="summary-number" id="reportSummaryAbsent">
+       0
+      </div>
+     </div>
+     <div class="summary-card late">
+      <div class="summary-label">
+       มาสาย (T)
+      </div>
+      <div class="summary-number" id="reportSummaryLate">
+       0
+      </div>
+     </div>
+    </div><!-- Report Table -->
+    <div class="table-container">
+     <div class="table-header">
+      เช็คชื่อรายวัน (แผนก PRESS Automotive → PRESS HYD)
+     </div>
+     <table class="data-table">
+      <thead>
+       <tr>
+        <th style="width: 50px;">#</th>
+        <th style="width: 120px;">รหัส</th>
+        <th>ชื่อ-นามสกุล</th>
+        <th style="width: 150px;">แผนก</th>
+        <th style="width: 120px;">สถานะ</th>
+        <th style="width: 80px;">สายรถ</th>
+        <th style="width: 80px; text-align: center;">✓</th>
+       </tr>
+      </thead>
+      <tbody id="reportTableBody"><!-- Data will be inserted here -->
+      </tbody>
+     </table>
+    </div>
+   </div>
+  </div><!-- Modal (ฟอร์มเพิ่ม/แก้ไขพนักงาน) -->
+  <div class="modal-overlay" id="employeeModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2 class="modal-title" id="modalTitle">เพิ่มพนักงานใหม่</h2><button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <form id="employeeForm" onsubmit="handleFormSubmit(event)"><input type="hidden" id="employeeId">
+     <div class="form-group"><label class="form-label">รหัสพนักงาน *</label> <input type="text" class="form-input" id="employeeCode" required>
+     </div>
+     <div class="form-group"><label class="form-label">ชื่อ-นามสกุล *</label> <input type="text" class="form-input" id="employeeName" required>
+     </div>
+     <div class="form-group"><label class="form-label">สายรถ *</label> <input type="text" class="form-input" id="employeeBus" required>
+     </div>
+     <div class="form-group"><label class="form-label">แผนก *</label> <select class="form-select" id="employeeDepartment" required> <option value="">เลือกแผนก</option> <option value="PRESS_AUTO">PRESS Automotive</option> <option value="PRESS_HYD">PRESS HYD</option> </select>
+     </div>
+     <div class="modal-footer"><button type="button" class="btn-cancel" onclick="closeModal()">ยกเลิก</button> <button type="submit" class="btn-submit">บันทึก</button>
+     </div>
+    </form>
+   </div>
+  </div><!-- Toast -->
+  <div class="toast" id="toast"><span id="toastIcon"></span> <span id="toastMessage"></span>
+  </div>
+  <script>
+        // ==========================================
+        // STORAGE ADAPTER PATTERN (รองรับ Google Sheets)
+        // ==========================================
+        
+        /**
+         * Abstract Storage Adapter Interface
+         * ใช้เป็น Contract สำหรับการสลับ Backend
+         */
+        class StorageAdapter {
+            async load() {
+                throw new Error('load() must be implemented');
+            }
+            
+            async save(data) {
+                throw new Error('save() must be implemented');
+            }
+            
+            async backup() {
+                throw new Error('backup() must be implemented');
+            }
+        }
+
+        /**
+         * LocalStorage Adapter (ปัจจุบัน)
+         * ทำงานแบบ Offline-First
+         */
+        class LocalStorageAdapter extends StorageAdapter {
+            constructor(storageKey, backupKey) {
+                super();
+                this.storageKey = storageKey;
+                this.backupKey = backupKey;
+            }
+
+            async load() {
+                try {
+                    const dataString = localStorage.getItem(this.storageKey);
+                    
+                    if (!dataString) {
+                        return { employees: [], nextId: 1 };
+                    }
+                    
+                    const data = JSON.parse(dataString);
+                    
+                    if (!this.validateData(data)) {
+                        console.warn('Invalid data detected, attempting backup restore...');
+                        return await this.restoreFromBackup();
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error('Error loading from storage:', error);
+                    return await this.restoreFromBackup();
+                }
+            }
+
+            async save(data) {
+                try {
+                    // Backup old data before overwriting
+                    await this.backup();
+                    
+                    const dataString = JSON.stringify(data);
+                    localStorage.setItem(this.storageKey, dataString);
+                    return true;
+                } catch (error) {
+                    console.error('Error saving to storage:', error);
+                    return false;
+                }
+            }
+
+            async backup() {
+                try {
+                    const oldData = localStorage.getItem(this.storageKey);
+                    if (oldData) {
+                        localStorage.setItem(this.backupKey, oldData);
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Error creating backup:', error);
+                    return false;
+                }
+            }
+
+            async restoreFromBackup() {
+                try {
+                    const backupString = localStorage.getItem(this.backupKey);
+                    
+                    if (!backupString) {
+                        return { employees: [], nextId: 1 };
+                    }
+                    
+                    const backup = JSON.parse(backupString);
+                    
+                    if (!this.validateData(backup)) {
+                        return { employees: [], nextId: 1 };
+                    }
+                    
+                    await this.save(backup);
+                    showToast('✅ กู้คืนข้อมูลจาก Backup สำเร็จ', 'success');
+                    return backup;
+                } catch (error) {
+                    console.error('Error restoring from backup:', error);
+                    return { employees: [], nextId: 1 };
+                }
+            }
+
+            validateData(data) {
+                if (!data || !data.employees || !Array.isArray(data.employees)) {
+                    return false;
+                }
+                
+                return data.employees.every(emp => 
+                    emp &&
+                    typeof emp.id === 'number' &&
+                    typeof emp.code === 'string' &&
+                    typeof emp.name === 'string' &&
+                    typeof emp.bus === 'string' &&
+                    typeof emp.department === 'string' &&
+                    typeof emp.workType === 'string' &&
+                    typeof emp.ot === 'string' &&
+                    typeof emp.status === 'string' &&
+                    typeof emp.remark === 'string' &&
+                    typeof emp.checked === 'boolean' &&
+                    typeof emp.updatedAt === 'string'
+                );
+            }
+        }
+
+        /**
+         * Google Sheets Adapter (อนาคต)
+         * ต่อยอดได้โดยไม่แก้ Logic
+         */
+        class GoogleSheetsAdapter extends StorageAdapter {
+            constructor(config) {
+                super();
+                this.apiKey = config.apiKey;
+                this.spreadsheetId = config.spreadsheetId;
+                this.sheetName = config.sheetName || 'employees';
+            }
+
+            async load() {
+                // TODO: Implement Google Sheets API
+                throw new Error('Google Sheets integration not implemented yet');
+            }
+
+            async save(data) {
+                // TODO: Implement Google Sheets API
+                throw new Error('Google Sheets integration not implemented yet');
+            }
+
+            async backup() {
+                // TODO: Implement backup to separate sheet
+                throw new Error('Google Sheets integration not implemented yet');
+            }
+        }
+
+        // ==========================================
+        // Global State Management
+        // ==========================================
+        let employees = [];
+        let currentPage = 'ot';
+        let currentDept = 'PRESS_AUTO';
+        let nextId = 1;
+        let editingId = null;
+
+        // Initialize Storage Adapter (สามารถสลับได้)
+        const storage = new LocalStorageAdapter('ot_employees_data', 'ot_employees_backup');
+
+        // ==========================================
+        // XSS Protection - Escape HTML
+        // ==========================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==========================================
+        // Data Persistence (ผ่าน Storage Adapter)
+        // ==========================================
+        async function saveData() {
+            const success = await storage.save({
+                employees: employees,
+                nextId: nextId
+            });
+            
+            if (!success) {
+                showToast('⚠️ ไม่สามารถบันทึกข้อมูลได้', 'error');
+            }
+            
+            return success;
+        }
+
+        async function loadData() {
+            const data = await storage.load();
+            employees = data.employees;
+            nextId = data.nextId || 1;
+        }
+
+        // ==========================================
+        // Page & Department Switching
+        // ==========================================
+        function switchPage(page, btnElement) {
+            currentPage = page;
+            
+            // Update navigation buttons
+            const allNavBtns = document.querySelectorAll('.nav-btn');
+            allNavBtns.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+            
+            // Update page visibility
+            const allPages = document.querySelectorAll('.page');
+            allPages.forEach(function(p) {
+                p.classList.remove('active');
+            });
+            document.getElementById(page + 'Page').classList.add('active');
+            
+            // Hide department nav on report page
+            const deptNav = document.getElementById('deptNav');
+            deptNav.style.display = (page === 'report') ? 'none' : 'flex';
+            
+            // Render appropriate page
+            if (page === 'ot') {
+                renderOTPage();
+            } else if (page === 'status') {
+                renderStatusPage();
+            } else if (page === 'report') {
+                renderReportPage();
+            }
+        }
+
+        function switchDept(dept, btnElement) {
+            currentDept = dept;
+            
+            // Update department buttons
+            const allDeptBtns = document.querySelectorAll('.dept-btn');
+            allDeptBtns.forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            btnElement.classList.add('active');
+            
+            // Re-render current page
+            if (currentPage === 'ot') {
+                renderOTPage();
+            } else if (currentPage === 'status') {
+                renderStatusPage();
+            }
+        }
+
+        function getCurrentDeptEmployees() {
+            return employees.filter(function(emp) {
+                return emp.department === currentDept;
+            });
+        }
+
+        // ==========================================
+        // OT Page Rendering
+        // ==========================================
+        function renderOTPage() {
+            const deptEmployees = getCurrentDeptEmployees();
+            
+            // Calculate summary
+            const total = deptEmployees.length;
+            const withOT = deptEmployees.filter(function(emp) {
+                return emp.ot !== '17:00' && emp.status !== 'L' && emp.status !== 'A';
+            }).length;
+            const withoutOT = deptEmployees.filter(function(emp) {
+                return emp.ot === '17:00' || emp.status === 'L' || emp.status === 'A';
+            }).length;
+            const helping = deptEmployees.filter(function(emp) {
+                return (emp.workType === 'help_dept' || emp.workType === 'help_project') &&
+                       emp.status !== 'L' && emp.status !== 'A';
+            }).length;
+            
+            // Update summary cards
+            document.getElementById('otSummaryTotal').textContent = total;
+            document.getElementById('otSummaryWithOT').textContent = withOT;
+            document.getElementById('otSummaryWithoutOT').textContent = withoutOT;
+            document.getElementById('otSummaryHelping').textContent = helping;
+            
+            // Render table
+            const tbody = document.getElementById('otTableBody');
+            
+            if (deptEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">ยังไม่มีพนักงานในแผนกนี้</div></div></td></tr>';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 0; i < deptEmployees.length; i++) {
+                const emp = deptEmployees[i];
+                const isLocked = emp.status === 'L' || emp.status === 'A';
+                const statusClass = getStatusClass(emp.status);
+                const workTypeClass = (emp.workType === 'help_dept' || emp.workType === 'help_project') ? 'helping' : '';
+                const otClass = emp.ot === '17:00' ? 'ot-no' : 'ot-yes';
+                
+                html += '<tr class="' + (isLocked ? 'locked' : '') + '">';
+                html += '<td>' + (i + 1) + '</td>';
+                html += '<td>' + escapeHtml(emp.code) + '</td>';
+                html += '<td>' + escapeHtml(emp.name) + '</td>';
+                html += '<td><span class="status-badge ' + statusClass + '">' + escapeHtml(emp.status) + ' (' + escapeHtml(getStatusName(emp.status)) + ')</span></td>';
+                html += '<td>' + escapeHtml(emp.bus) + '</td>';
+                html += '<td><select class="control-select ' + workTypeClass + '" onchange="updateWorkType(' + emp.id + ', this.value)" ' + (isLocked ? 'disabled' : '') + '>';
+                html += '<option value="press" ' + (emp.workType === 'press' ? 'selected' : '') + '>Press</option>';
+                html += '<option value="help_dept" ' + (emp.workType === 'help_dept' ? 'selected' : '') + '>ไปช่วยต่างแผนก</option>';
+                html += '<option value="help_project" ' + (emp.workType === 'help_project' ? 'selected' : '') + '>ไปช่วยต่างโปร</option>';
+                html += '</select></td>';
+                html += '<td><select class="control-select ' + otClass + '" onchange="updateOT(' + emp.id + ', this.value)" ' + (isLocked ? 'disabled' : '') + '>';
+                html += '<option value="17:00" ' + (emp.ot === '17:00' ? 'selected' : '') + '>17:00 (ไม่ทำ OT)</option>';
+                html += '<option value="20:30" ' + (emp.ot === '20:30' ? 'selected' : '') + '>20:30</option>';
+                html += '<option value="21:30" ' + (emp.ot === '21:30' ? 'selected' : '') + '>21:30</option>';
+                html += '<option value="22:30" ' + (emp.ot === '22:30' ? 'selected' : '') + '>22:30</option>';
+                html += '<option value="23:30" ' + (emp.ot === '23:30' ? 'selected' : '') + '>23:30</option>';
+                html += '</select></td>';
+                html += '<td><button class="btn-edit" onclick="editEmployee(' + emp.id + ')" ' + (isLocked ? 'disabled' : '') + '>แก้ไข</button></td>';
+                html += '</tr>';
+                
+                if (emp.remark && emp.status !== 'P') {
+                    html += '<tr class="' + (isLocked ? 'locked' : '') + '">';
+                    html += '<td colspan="8"><div class="remark-display">💬 หมายเหตุ: ' + escapeHtml(emp.remark) + '</div></td>';
+                    html += '</tr>';
+                }
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        // ==========================================
+        // Status Page Rendering
+        // ==========================================
+        function renderStatusPage() {
+            const deptEmployees = getCurrentDeptEmployees();
+            
+            // Calculate summary
+            const present = deptEmployees.filter(function(emp) { return emp.status === 'P'; }).length;
+            const leave = deptEmployees.filter(function(emp) { return emp.status === 'L'; }).length;
+            const absent = deptEmployees.filter(function(emp) { return emp.status === 'A'; }).length;
+            const late = deptEmployees.filter(function(emp) { return emp.status === 'T'; }).length;
+            
+            // Update summary cards
+            document.getElementById('statusSummaryPresent').textContent = present;
+            document.getElementById('statusSummaryLeave').textContent = leave;
+            document.getElementById('statusSummaryAbsent').textContent = absent;
+            document.getElementById('statusSummaryLate').textContent = late;
+            
+            // Render table
+            const tbody = document.getElementById('statusTableBody');
+            
+            if (deptEmployees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">ยังไม่มีพนักงานในแผนกนี้</div></div></td></tr>';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 0; i < deptEmployees.length; i++) {
+                const emp = deptEmployees[i];
+                const statusClass = getStatusClass(emp.status);
+                const needsRemark = emp.status === 'L' || emp.status === 'A' || emp.status === 'T';
+                const hasRemarkError = needsRemark && !emp.remark.trim();
+                
+                html += '<tr>';
+                html += '<td>' + (i + 1) + '</td>';
+                html += '<td>' + escapeHtml(emp.code) + '</td>';
+                html += '<td>' + escapeHtml(emp.name) + '</td>';
+                html += '<td>' + escapeHtml(emp.bus) + '</td>';
+                html += '<td><select class="control-select ' + statusClass + '" onchange="updateStatus(' + emp.id + ', this.value)">';
+                html += '<option value="P" ' + (emp.status === 'P' ? 'selected' : '') + '>P - มาทำงาน</option>';
+                html += '<option value="L" ' + (emp.status === 'L' ? 'selected' : '') + '>L - ลา</option>';
+                html += '<option value="A" ' + (emp.status === 'A' ? 'selected' : '') + '>A - ขาด</option>';
+                html += '<option value="T" ' + (emp.status === 'T' ? 'selected' : '') + '>T - มาสาย</option>';
+                html += '</select></td>';
+                
+                if (needsRemark) {
+                    html += '<td>';
+                    html += '<input type="text" class="remark-input ' + (hasRemarkError ? 'required' : '') + '" ';
+                    html += 'value="' + escapeHtml(emp.remark) + '" ';
+                    html += 'placeholder="⚠️ กรุณากรอกเหตุผล (บังคับ)" ';
+                    html += 'onchange="updateRemark(' + emp.id + ', this.value)">';
+                    if (hasRemarkError) {
+                        html += '<div class="error-indicator show">⚠️ ต้องกรอกหมายเหตุ</div>';
+                    }
+                    html += '</td>';
+                } else {
+                    html += '<td>-</td>';
+                }
+                
+                html += '</tr>';
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        // ==========================================
+        // Report Page Rendering
+        // ==========================================
+        function renderReportPage() {
+            // Calculate summary (all departments)
+            const present = employees.filter(function(emp) { return emp.status === 'P'; }).length;
+            const leave = employees.filter(function(emp) { return emp.status === 'L'; }).length;
+            const absent = employees.filter(function(emp) { return emp.status === 'A'; }).length;
+            const late = employees.filter(function(emp) { return emp.status === 'T'; }).length;
+            
+            // Update summary cards
+            document.getElementById('reportSummaryPresent').textContent = present;
+            document.getElementById('reportSummaryLeave').textContent = leave;
+            document.getElementById('reportSummaryAbsent').textContent = absent;
+            document.getElementById('reportSummaryLate').textContent = late;
+            
+            // Render table
+            const tbody = document.getElementById('reportTableBody');
+            
+            if (employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">ยังไม่มีพนักงานในระบบ</div></div></td></tr>';
+                return;
+            }
+            
+            // Sort by department (PRESS_AUTO first) then by code
+            const sortedEmployees = employees.slice().sort(function(a, b) {
+                if (a.department !== b.department) {
+                    return a.department === 'PRESS_AUTO' ? -1 : 1;
+                }
+                return a.code.localeCompare(b.code);
+            });
+            
+            let html = '';
+            for (let i = 0; i < sortedEmployees.length; i++) {
+                const emp = sortedEmployees[i];
+                const statusClass = getStatusClass(emp.status);
+                const deptName = emp.department === 'PRESS_AUTO' ? 'PRESS Automotive' : 'PRESS HYD';
+                
+                html += '<tr>';
+                html += '<td>' + (i + 1) + '</td>';
+                html += '<td>' + escapeHtml(emp.code) + '</td>';
+                html += '<td>' + escapeHtml(emp.name) + '</td>';
+                html += '<td>' + escapeHtml(deptName) + '</td>';
+                html += '<td><span class="status-badge ' + statusClass + '">' + escapeHtml(emp.status) + ' (' + escapeHtml(getStatusName(emp.status)) + ')</span></td>';
+                html += '<td>' + escapeHtml(emp.bus) + '</td>';
+                html += '<td style="text-align: center;"><input type="checkbox" class="status-checkbox" ';
+                html += (emp.checked ? 'checked' : '') + ' ';
+                html += 'onchange="updateCheckbox(' + emp.id + ', this.checked)"></td>';
+                html += '</tr>';
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        // ==========================================
+        // Helper Functions
+        // ==========================================
+        function getStatusName(status) {
+            const names = {
+                'P': 'มาทำงาน',
+                'L': 'ลา',
+                'A': 'ขาด',
+                'T': 'มาสาย'
+            };
+            return names[status] || status;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'P': 'present',
+                'L': 'leave',
+                'A': 'absent',
+                'T': 'late'
+            };
+            return classes[status] || '';
+        }
+
+        // ==========================================
+        // Employee CRUD Operations
+        // ==========================================
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'เพิ่มพนักงานใหม่';
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeeDepartment').value = currentDept;
+            document.getElementById('employeeModal').classList.add('show');
+        }
+
+        function editEmployee(id) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (!emp) return;
+            
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'แก้ไขข้อมูลพนักงาน';
+            document.getElementById('employeeId').value = emp.id;
+            document.getElementById('employeeCode').value = emp.code;
+            document.getElementById('employeeName').value = emp.name;
+            document.getElementById('employeeBus').value = emp.bus;
+            document.getElementById('employeeDepartment').value = emp.department;
+            document.getElementById('employeeModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('employeeModal').classList.remove('show');
+            editingId = null;
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const code = document.getElementById('employeeCode').value.trim();
+            const name = document.getElementById('employeeName').value.trim();
+            const bus = document.getElementById('employeeBus').value.trim();
+            const department = document.getElementById('employeeDepartment').value;
+            
+            // Validation
+            if (!code || !name || !bus || !department) {
+                showToast('⚠️ กรุณากรอกข้อมูลให้ครบทุกช่อง', 'error');
+                return;
+            }
+            
+            // Check duplicate code
+            const duplicateCode = employees.find(function(emp) {
+                return emp.code === code && emp.id !== editingId;
+            });
+            
+            if (duplicateCode) {
+                showToast('⚠️ รหัสพนักงานนี้มีอยู่แล้วในระบบ', 'error');
+                return;
+            }
+            
+            if (editingId) {
+                // Edit existing employee
+                const emp = employees.find(function(e) { return e.id === editingId; });
+                if (emp) {
+                    emp.code = code;
+                    emp.name = name;
+                    emp.bus = bus;
+                    emp.department = department;
+                    emp.updatedAt = new Date().toISOString();
+                    showToast('✅ แก้ไขข้อมูลสำเร็จ', 'success');
+                }
+            } else {
+                // Add new employee
+                employees.push({
+                    id: nextId++,
+                    code: code,
+                    name: name,
+                    bus: bus,
+                    department: department,
+                    workType: 'press',
+                    ot: '17:00',
+                    status: 'P',
+                    remark: '',
+                    checked: false,
+                    updatedAt: new Date().toISOString()
+                });
+                showToast('✅ เพิ่มพนักงานสำเร็จ', 'success');
+            }
+            
+            saveData();
+            closeModal();
+            
+            // Re-render current page
+            if (currentPage === 'ot') {
+                renderOTPage();
+            } else if (currentPage === 'status') {
+                renderStatusPage();
+            } else if (currentPage === 'report') {
+                renderReportPage();
+            }
+        }
+
+        // ==========================================
+        // Update Functions
+        // ==========================================
+        function updateWorkType(id, newWorkType) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (emp) {
+                emp.workType = newWorkType;
+                emp.updatedAt = new Date().toISOString();
+                saveData();
+                renderOTPage();
+                showToast('✅ อัพเดทประเภทงานแล้ว', 'success');
+            }
+        }
+
+        function updateOT(id, newOT) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (emp) {
+                emp.ot = newOT;
+                emp.updatedAt = new Date().toISOString();
+                saveData();
+                renderOTPage();
+                showToast('✅ อัพเดท OT แล้ว', 'success');
+            }
+        }
+
+        function updateStatus(id, newStatus) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (!emp) return;
+            
+            const oldStatus = emp.status;
+            
+            // Check if new status requires remark
+            const needsRemark = newStatus === 'L' || newStatus === 'A' || newStatus === 'T';
+            
+            if (needsRemark && !emp.remark.trim()) {
+                showToast('⚠️ กรุณากรอกหมายเหตุก่อนเปลี่ยนสถานะ', 'error');
+                renderStatusPage();
+                return;
+            }
+            
+            emp.status = newStatus;
+            
+            // Clear remark if status is P
+            if (newStatus === 'P') {
+                emp.remark = '';
+            }
+            
+            emp.updatedAt = new Date().toISOString();
+            saveData();
+            renderStatusPage();
+            
+            // Update OT page if visible
+            if (currentPage === 'ot') {
+                renderOTPage();
+            }
+            
+            showToast('✅ เปลี่ยนสถานะเป็น ' + getStatusName(newStatus) + ' แล้ว', 'success');
+        }
+
+        function updateRemark(id, newRemark) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (emp) {
+                const trimmedRemark = newRemark.trim();
+                emp.remark = trimmedRemark;
+                emp.updatedAt = new Date().toISOString();
+                saveData();
+                
+                const needsRemark = emp.status === 'L' || emp.status === 'A' || emp.status === 'T';
+                if (needsRemark && !trimmedRemark) {
+                    showToast('⚠️ สถานะ ' + getStatusName(emp.status) + ' ต้องกรอกหมายเหตุ', 'error');
+                    renderStatusPage();
+                } else if (needsRemark && trimmedRemark) {
+                    showToast('✅ บันทึกหมายเหตุแล้ว', 'success');
+                    renderStatusPage();
+                }
+            }
+        }
+
+        function updateCheckbox(id, checked) {
+            const emp = employees.find(function(e) { return e.id === id; });
+            if (emp) {
+                emp.checked = checked;
+                emp.updatedAt = new Date().toISOString();
+                saveData();
+            }
+        }
+
+        // ==========================================
+        // Toast Notification
+        // ==========================================
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const messageEl = document.getElementById('toastMessage');
+            
+            toast.className = 'toast ' + type;
+            icon.textContent = type === 'success' ? '✅' : '❌';
+            messageEl.textContent = message;
+            
+            toast.classList.add('show');
+            
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // ==========================================
+        // Initialize App
+        // ==========================================
+        async function initializeApp() {
+            await loadData();
+            renderOTPage();
+        }
+
+        initializeApp();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ba3f5c1a16a835d',t:'MTc2Nzc5NDIwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
